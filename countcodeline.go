@@ -2,6 +2,7 @@ package main
 
 import(
 	"os"
+	"container/list"
 	"io"
 	"log"
 	"path/filepath"
@@ -9,15 +10,46 @@ import(
 )
 
 func init(){
-
+	log.SetFlags(log.Llongfile| log.LstdFlags)
 }
 
-
 func main(){
-	fullPath := GetSrcFullPath()
+	conf,err := ParseConf()
+	if nil != err{
+		log.Println(err)
+		return
+	}
+	allFiles := GetAllFilesName()
+	srcList := GetParsedFilesByConf(allFiles, conf)
+	Parse(srcList)
+}
 
-	ParseConf()
-	log.Println(fullPath)
+func Parse(files list.List){
+	totalNum := 0
+	for e := files.Front(); nil != e; e = e.Next(){
+		totalNum += ComputeLine(e.Value.(string))
+	}
+
+	println("totalNum: ",totalNum)
+}
+
+func ComputeLine(path string)(num int){
+	f,err := os.Open(path)
+	if nil != err{
+		log.Println(err)
+		return
+	}
+	defer f.Close()
+
+	r := bufio.NewReader(f)
+	for{
+		_,err := r.ReadString('\n')
+		if io.EOF == err || nil != err{
+			break
+		}
+		num += 1
+	}
+	return
 }
 
 func ParseConf()(conf []string, err error){
@@ -34,11 +66,15 @@ func ParseConf()(conf []string, err error){
 	var line string
 	for{
 		line, err = rd.ReadString('\n')
-		if io.EOF == err || nil != err{
+		if io.EOF == err{
+			err = nil
+			break
+		}else if nil != err{
 			break
 		}
-		conf = append(conf, line)
+		conf = append(conf, line[:len(line)-1])
 	}
+	log.Println(conf)
 	return
 }
 
@@ -52,5 +88,46 @@ func GetSrcFullPath()(fullPath string){
 	}
 
 	fullPath,_ = filepath.Abs(fullPath)
+	return
+}
+
+func GetParsedFilesByConf(lst list.List,conf []string)(l list.List){
+	for e := lst.Front(); nil != e; e = e.Next(){
+		ext := filepath.Ext(e.Value.(string))
+		for _,extension := range conf{
+			if ext == extension{
+				l.PushBack(e.Value.(string))
+				continue
+			}
+		}
+	}
+
+	for e := l.Front(); nil != e; e = e.Next(){
+		println("matched string:" ,e.Value.(string))
+	}
+	return
+}
+
+func GetAllFilesName() (lst list.List){
+	fullPath := GetSrcFullPath()
+	log.Println("fullpath:",fullPath)
+	filepath.Walk(fullPath,func(path string,fi os.FileInfo,err error)error{
+		if nil == fi {
+			return err
+		}
+		if fi.IsDir() {
+			return nil
+		}
+
+		//println(fi.Name())
+		//println(path)
+		//name := fi.Name()
+		lst.PushBack(path)
+		return nil
+	})
+
+	for e := lst.Front(); nil != e; e = e.Next(){
+		//log.Println("lst:",e.Value.(string))
+	}
 	return
 }
