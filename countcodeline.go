@@ -21,16 +21,24 @@ func main(){
 	}
 	allFiles := GetAllFilesName()
 	srcList := GetParsedFilesByConf(allFiles, conf)
-	Parse(srcList)
+	res := Parse(srcList)
+	total := 0
+	for k,v := range res{
+		total += v
+		println(k,":",v)
+	}
+	println("Total: ", total)
 }
 
-func Parse(files list.List){
-	totalNum := 0
+//example:map["go" or "css"]123
+func Parse(files list.List)(parseResult map[string]int){
+	parseResult = map[string]int{}
 	for e := files.Front(); nil != e; e = e.Next(){
-		totalNum += ComputeLine(e.Value.(string))
+		v := e.Value.(string)
+		ext := filepath.Ext(v)
+		parseResult[ext] += ComputeLine(v)
 	}
-
-	println("totalNum: ",totalNum)
+	return
 }
 
 func ComputeLine(path string)(num int){
@@ -74,7 +82,7 @@ func ParseConf()(conf []string, err error){
 		}
 		conf = append(conf, line[:len(line)-1])
 	}
-	log.Println(conf)
+	//log.Println(conf)
 	return
 }
 
@@ -110,7 +118,6 @@ func GetParsedFilesByConf(lst list.List,conf []string)(l list.List){
 
 func GetAllFilesName() (lst list.List){
 	fullPath := GetSrcFullPath()
-	log.Println("fullpath:",fullPath)
 	filepath.Walk(fullPath,func(path string,fi os.FileInfo,err error)error{
 		if nil == fi {
 			return err
@@ -125,9 +132,5 @@ func GetAllFilesName() (lst list.List){
 		lst.PushBack(path)
 		return nil
 	})
-
-	for e := lst.Front(); nil != e; e = e.Next(){
-		//log.Println("lst:",e.Value.(string))
-	}
 	return
 }
