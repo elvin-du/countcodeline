@@ -69,18 +69,9 @@ func ParseConf()(conf []string, err error){
 		return
 	}
 	defer file.Close()
-
-	rd := bufio.NewReader(file)
-	var line string
-	for{
-		line, err = rd.ReadString('\n')
-		if io.EOF == err{
-			err = nil
-			break
-		}else if nil != err{
-			break
-		}
-		conf = append(conf, line[:len(line)-1])
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan(){
+		conf = append(conf, scanner.Text())
 	}
 	//log.Println(conf)
 	return
@@ -118,6 +109,7 @@ func GetParsedFilesByConf(lst list.List,conf []string)(l list.List){
 
 func GetAllFilesName() (lst list.List){
 	fullPath := GetSrcFullPath()
+	log.Println("fullPath:" ,fullPath)
 	filepath.Walk(fullPath,func(path string,fi os.FileInfo,err error)error{
 		if nil == fi {
 			return err
