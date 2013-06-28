@@ -1,0 +1,14 @@
+<project>
+	<file>
+		<ext>.cs</ext>
+		<comment>//</comment>
+	</file>
+	<file>
+		<ext>.js</ext>
+		<comment>//</comment>
+	</file>
+	<file>
+		<ext>.go</ext>
+		<comment>//</comment>
+	</file>
+</project>
